@@ -43,7 +43,8 @@ class MHSampler(Sampler):
         # log posterior of hypothesis
         log_p_h = h.log_prior() + h.log_likelihood(self.data)
 
-        run = MCMCRun("", self.iter_count, best_sample_count=self.best_sample_count)
+        run = MCMCRun(info={"Sampler": "MHSampler"}, log_row_count=self.iter_count, best_sample_count=self.best_sample_count,
+                      log_columns=['Iteration', 'IsAccepted', 'LogProbability', 'LogAcceptanceRatio', 'MoveType'])
         accepted_count = 0
         print("MHSampler Start\n")
         for i in range(self.iter_count):
@@ -68,10 +69,13 @@ class MHSampler(Sampler):
                 h = hp
                 log_p_h = log_p_hp
 
-            run.record_iteration(i, is_accepted, log_p_h, log_a_hp_h, move_type)
+            run.record_log({'Iteration': i, 'IsAccepted': is_accepted, 'LogProbability': log_p_h,
+                                  'LogAcceptanceRatio': log_a_hp_h, 'MoveType': move_type})
 
             if i >= self.burn_in:
                 if (i % self.thinning_period) == 0:
+                    # NOTE: move_type here is sometimes WRONG. it is not always the move that immediately led to the
+                    # move. This should be FIXED at some point.
                     run.add_sample(h, log_p_h, i, move_type)
 
                 run.add_best_sample(h, log_p_h, i, move_type)

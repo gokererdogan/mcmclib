@@ -15,17 +15,23 @@ from mcmclib.mcmc_run import *
 
 class MCMCRunTest(unittest.TestCase):
     def setUp(self):
-        self.r = MCMCRun(info='test', iteration_count=2, best_sample_count=2)
+        self.r = MCMCRun(info='test', log_row_count=2, best_sample_count=2,
+                         log_columns=['Iteration', 'IsAccepted', 'LogProbability', 'LogAcceptanceRatio', 'MoveType'])
 
     def tearDown(self):
         self.r = None
 
     def test_record_iteration(self):
-        self.r.record_iteration(0, 1, 1.0, 1.0, 'move1')
-        self.r.record_iteration(1, 0, 1.0, 1.0, 'move2')
-        self.assertTrue(np.all(self.r.run_log.loc[0] == [0, 1, 1.0, 1.0, 'move1']))
-        self.assertTrue(np.all(self.r.run_log.loc[1] == [1, 0, 1.0, 1.0, 'move2']))
-        self.assertRaises(KeyError, self.r.record_iteration, 2, 1, 1, 1, 'test')
+        r1 = {'Iteration': 0, 'IsAccepted': 1, 'LogProbability': 1.0, 'LogAcceptanceRatio': 1.0,
+              'MoveType': 'move1'}
+        r2 = {'Iteration': 1, 'IsAccepted': 0, 'LogProbability': 1.0, 'LogAcceptanceRatio': 1.0,
+              'MoveType': 'move2'}
+        self.r.record_log(r1)
+        self.r.record_log(r2)
+        self.assertTrue(dict(self.r.run_log.loc[0]) == r1)
+        self.assertTrue(dict(self.r.run_log.loc[1]) == r2)
+        self.assertRaises(IndexError, self.r.record_log, {'Iteration': 2, 'IsAccepted': 1, 'LogProbability': 1,
+                                                          'LogAcceptanceRatio': 1, 'MoveType': 'test'})
 
     def test_add_sample(self):
         self.r.add_sample('sample1', 1.0, 1, 'move1')
@@ -47,8 +53,10 @@ class MCMCRunTest(unittest.TestCase):
         self.assertIn('sample2', self.r.best_samples.samples)
 
     def test_acceptance_rate_by_move(self):
-        self.r.record_iteration(0, 1, 1.0, 1.0, 'move1')
-        self.r.record_iteration(1, 0, 1.0, 1.0, 'move2')
+        self.r.record_log({'Iteration': 0, 'IsAccepted': 1, 'LogProbability': 1.0, 'LogAcceptanceRatio': 1.0,
+                           'MoveType': 'move1'})
+        self.r.record_log({'Iteration': 1, 'IsAccepted': 0, 'LogProbability': 1.0, 'LogAcceptanceRatio': 1.0,
+                           'MoveType': 'move2'})
         t = self.r.acceptance_rate_by_move()
         self.assertTrue(np.all(t[t.MoveType == 'move1'].AcceptanceRate == 1.0))
         self.assertTrue(np.all(t[t.MoveType == 'move2'].AcceptanceRate == 0.0))

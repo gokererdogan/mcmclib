@@ -17,27 +17,32 @@ import cPickle
 
 BEST_SAMPLES_LIST_SIZE = 20
 
-class MCMCRun:
+class MCMCRun(object):
     """
     MCMCRun class holds information, e.g., probability, acceptance rate,
      samples, and best samples, related to a run of a MCMC chain.
     """
-    def __init__(self, info, iteration_count, best_sample_count=BEST_SAMPLES_LIST_SIZE):
+    def __init__(self, info, log_row_count, log_columns, best_sample_count=BEST_SAMPLES_LIST_SIZE):
         self.info = info
         self.start_time = time.strftime("%Y.%m.%d %H:%M:%S")
         self.end_time = ""
         self.samples = SampleSet()
         self.best_samples = BestSampleSet(best_sample_count)
-        self.iteration_count = iteration_count
-        self.run_log = pd.DataFrame(index=np.arange(0, self.iteration_count), dtype=np.float,
-                                    columns=['Iteration', 'IsAccepted', 'LogProbability',
-                                             'LogAcceptanceRatio', 'MoveType'])
+        self.log_row_count = log_row_count
+        self.run_log = pd.DataFrame(index=np.arange(0, self.log_row_count), dtype=np.float, columns=log_columns)
+        self.last_log_row_index = 0
 
-    def record_iteration(self, i, is_accepted, log_prob, log_acc, move_type):
-        if i >= self.iteration_count:
-            raise KeyError("Index cannot be greater than number of iterations.")
+    def record_log(self, row):
+        """Record one row into log
 
-        self.run_log.loc[i] = [i, is_accepted, log_prob, log_acc, move_type]
+        Args:
+            row (dict): A dictionary of information to record
+        """
+        if self.last_log_row_index >= self.log_row_count:
+            raise IndexError("Log full. Cannot add new row.")
+
+        self.run_log.iloc[self.last_log_row_index] = pd.Series(row)
+        self.last_log_row_index += 1
 
     def add_sample(self, s, log_prob, iter_no, info):
         self.samples.add(s, log_prob, iter_no, info)
