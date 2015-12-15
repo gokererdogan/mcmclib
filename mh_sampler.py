@@ -57,7 +57,7 @@ class MHSampler(Sampler):
             log_p_hp = hp.log_prior() + hp.log_likelihood(self.data)
 
             # a(h -> hp)
-            log_a_hp_h = log_p_hp + np.log(q_h_hp) - log_p_h + np.log(q_hp_h)
+            log_a_hp_h = log_p_hp + np.log(q_h_hp) - (log_p_h + np.log(q_hp_h))
 
             is_accepted = 0
             # accept/reject
@@ -70,7 +70,7 @@ class MHSampler(Sampler):
                 log_p_h = log_p_hp
 
             run.record_log({'Iteration': i, 'IsAccepted': is_accepted, 'LogProbability': log_p_h,
-                                  'LogAcceptanceRatio': log_a_hp_h, 'MoveType': move_type})
+                            'LogAcceptanceRatio': log_a_hp_h, 'MoveType': move_type})
 
             if i >= self.burn_in:
                 if (i % self.thinning_period) == 0:

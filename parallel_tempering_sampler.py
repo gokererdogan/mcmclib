@@ -14,9 +14,11 @@ import numpy as np
 from mcmc_run import *
 from sampler import *
 
+
 class ParallelTemperingSampler(Sampler):
     """Parallel Tempering (PT) sampler class.
     """
+
     def __init__(self, initial_hs, data, proposals, temperatures, sampling_chain=None, burn_in=100, sample_count=10,
                  best_sample_count=10, thinning_period=100, report_period=200, verbose=False):
         """Parallel Tempering (PT) sampler constructor
@@ -90,7 +92,7 @@ class ParallelTemperingSampler(Sampler):
                                      / self.temperatures[chain_id]
 
                 # a(h -> hp)
-                log_a_hp_h = log_p_hp[chain_id] + np.log(q_h_hp) - log_p_h[chain_id] + np.log(q_hp_h)
+                log_a_hp_h = log_p_hp[chain_id] + np.log(q_h_hp) - (log_p_h[chain_id] + np.log(q_hp_h))
 
                 is_accepted = 0
                 # accept/reject
@@ -125,6 +127,9 @@ class ParallelTemperingSampler(Sampler):
 
             # exchange move
             # calculate exchange move acceptance ratio
+            # a(c1,c2->c2,c1) = (p(h2)^(1/T1) * p(h1)^(1/T2) * q(c1<->c2)) / (p(h1)^(1/T1) * p(h2)^(1/T2) * q(c2<->c1))
+            #                 = [p(h2) / p(h1))^(1/T1 - 1/T2)] * [q(c1<->c2) / q(c2<->c1)]
+            # Note that q(c1<->c2) = q(c2<->c1) in our case.
             log_a_c2_c1 = ((1.0 / self.temperatures[chain1]) - (1.0 / self.temperatures[chain2])) * \
                           ((log_p_h[chain2] * self.temperatures[chain2]) -
                            (log_p_h[chain1] * self.temperatures[chain1]))
@@ -143,8 +148,10 @@ class ParallelTemperingSampler(Sampler):
                 temp = h[chain1]
                 h[chain1] = h[chain2]
                 h[chain2] = temp
-                log_p_h[chain1] = (h[chain1].log_prior() + h[chain1].log_likelihood(self.data)) / self.temperatures[chain1]
-                log_p_h[chain2] = (h[chain2].log_prior() + h[chain2].log_likelihood(self.data)) / self.temperatures[chain2]
+                log_p_h[chain1] = (h[chain1].log_prior() + h[chain1].log_likelihood(self.data)) / self.temperatures[
+                    chain1]
+                log_p_h[chain2] = (h[chain2].log_prior() + h[chain2].log_likelihood(self.data)) / self.temperatures[
+                    chain2]
 
             run.record_log({"Iteration": i, "Chain": chain1, "IsAccepted": is_exchange_accepted,
                             "LogProbability": log_p_h[chain1], "LogAcceptanceRatio": log_a_c2_c1,
@@ -172,4 +179,3 @@ class ParallelTemperingSampler(Sampler):
         print("Sampling finished. Acceptance ratios for each chain: {0:s}\n".format(acc_ratios))
         print("Exchange move acceptance ratio: {0:f}\n".format(float(exchange_accepted_count) / self.iter_count))
         return run
-
