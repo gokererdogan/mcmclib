@@ -111,8 +111,8 @@ class ParallelTemperingSamplerTest(unittest.TestCase):
 
         run = s.sample()
         print(run.run_log)
-        # there should be 6 lines in run_log (at each iteration, we update 2 chain + exchange move)
-        self.assertEqual(run.run_log.shape[0], 6)
+        # there should be 3 lines in run_log (at each iteration, we update 2 chain + exchange move)
+        self.assertEqual(run.run_log.shape[0], 3)
         # first iteration
         # first chain (T=2.0), within chain update. p(h) = (1.0)^(1/2), p(hp) = 2.0^(1/2), q(hp|h) = 0.5, q(h|hp) = 1.0
         #   a(h->hp) = [2.0^(1/2) * 1.0] / [1.0^(1/2) * 0.5] = 2*sqrt(2)
