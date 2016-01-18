@@ -110,7 +110,6 @@ class ParallelTemperingSamplerTest(unittest.TestCase):
         self.assertEqual(s.sampling_chain, 1)
 
         run = s.sample()
-        print(run.run_log)
         # there should be 3 lines in run_log (at each iteration, we update 2 chain + exchange move)
         self.assertEqual(run.run_log.shape[0], 3)
         # first iteration

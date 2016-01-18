@@ -87,7 +87,7 @@ class MHSampler(Sampler):
                 print(h)
 
         run.finish()
-        print("Sampling finished. Acceptance ratio: {0:f}\n".format(float(accepted_count) / self.iter_count))
+        print("Sampling finished. Acceptance rate: {0:f}\n".format(float(accepted_count) / self.iter_count))
         return run
 
 
